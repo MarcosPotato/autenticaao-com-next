@@ -32,7 +32,7 @@ export const signOut = () => {
     destroyCookie(undefined, "nextauth.token")
     destroyCookie(undefined, "nextauth.refreshToken")
 
-    authChannel.postMessage("signOut")
+    /* authChannel.postMessage("signOut") */
 
     Router.push("/")
 }
