@@ -17,6 +17,7 @@ type SigInCredentials = {
 type AuthContextData  = {
     user: User | null
     signIn(credentials: SigInCredentials): Promise<void>
+    signOut(): void
     isAuthenticated: boolean
 }
 
@@ -25,13 +26,17 @@ type AuthContextProviderProps = {
 }
 
 const AuthContext = createContext({} as AuthContextData)
+let authChannel: BroadcastChannel
 
 export const signOut = () => {
     destroyCookie(undefined, "nextauth.token")
     destroyCookie(undefined, "nextauth.refreshToken")
 
+    authChannel.postMessage("signOut")
+
     Router.push("/")
 }
+
 
 export const AuthContextProvider: React.FC<AuthContextProviderProps> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null)
@@ -59,6 +64,19 @@ export const AuthContextProvider: React.FC<AuthContextProviderProps> = ({ childr
         }
     },[])
 
+    /* useEffect(() => {
+        authChannel = new BroadcastChannel("auth")
+        authChannel.onmessage = (message) => {
+            switch(message.data){
+                case "signOut":
+                    signOut()
+                    break
+                default: 
+                    break
+            }
+        }
+    },[]) */
+
     const signIn = async({ email, password }: SigInCredentials) => {
         try {
             const response = await api.post("/sessions", {
@@ -83,7 +101,6 @@ export const AuthContextProvider: React.FC<AuthContextProviderProps> = ({ childr
                 permissions,
                 roles
             })
-
             Router.push("/dashboard")
             
         } catch (error: any) {
@@ -92,7 +109,7 @@ export const AuthContextProvider: React.FC<AuthContextProviderProps> = ({ childr
     }
 
     return (
-        <AuthContext.Provider value={{ user, signIn, isAuthenticated }}>
+        <AuthContext.Provider value={{ user, signIn, isAuthenticated, signOut }}>
             { children }
         </AuthContext.Provider>
     )

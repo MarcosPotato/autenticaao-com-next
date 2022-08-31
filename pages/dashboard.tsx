@@ -1,17 +1,23 @@
 import type { NextPage } from 'next'
-import { destroyCookie } from 'nookies'
+import { Can } from '../components/Can'
 import { useAuth } from '../contexts/AuthContext'
 import { setupApiClient } from '../services/api'
-import { AuthTokenError } from '../services/errors/AuthTokenError'
 import { withSSRAuth } from '../utils/withSSRAuth'
 
 const Dashboard: NextPage = () => {
-    const { user } = useAuth()
 
-    console.log(user)
+    const { signOut } = useAuth()
 
     return (
-        <h1>Dash</h1>
+        <>
+            <h1>Dash</h1>
+            <button onClick={ signOut }>SignOut</button>
+            <Can permissions={['metrics.list']}>
+                <div>
+                    <p>Métricas</p>
+                </div>
+            </Can>
+        </>
     )
 }
 
@@ -19,19 +25,7 @@ export default Dashboard
 
 export const getServerSideProps = withSSRAuth(async(context) => {
     const apiLCient = setupApiClient(context)
-    try {
-        const response = await apiLCient.get("/me")
-    } catch (error) {
-        destroyCookie(context, "nextauth.token")
-        destroyCookie(context, "nextauth.refreshToken")
-        
-        return {
-            redirect: {
-                destination: "/",
-                permanent: false
-            }
-        }
-    }
+    const response = await apiLCient.get("/me")
 
     return {
         props: {}
